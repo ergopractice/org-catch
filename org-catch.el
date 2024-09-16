@@ -9,7 +9,7 @@
 ;;;; form processing
 ;;;; ---------------
 
-(defvar org-catch--helpers-pref "org-catch--helper-"
+(defvar org-catch--helpers-prefix "org-catch--helper-"
   "Prefix for helper functions that intended to be used in `org-catch' DATA argument. This prefix can be omitted in the DATA forms (values for keys) for readability. Mind, however, possible namespace clashes.")
 
 (defun org-catch--preprocess-form (form &optional pos collected-pairs)
