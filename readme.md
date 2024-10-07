@@ -86,6 +86,27 @@ The key feature of `org-catch` is that order in which user inputs required infor
 ```
 
 
+# Keywords
+
+All `org-catch` keywords are specified in `org-catch-keywords` variable. User can change any keyword to own liking and extend `org-catch` with extra functionalities. Each keyword is associated with a method which is called in the following workflow:
+
+-   Eval things while at initial context
+    -   `eval-init`
+-   Get target and go there
+    -   `target`
+    -   `target-datetree`
+-   Eval at target before inserting new org entry
+    -   `eval-before` (binds results from `eval-init`)
+-   Insert new org entry, body and properties
+    -   `target-item`
+    -   `target-body`
+    -   `set-properties`
+-   Eval at target after making new org entry
+    -   `eval-after` (binds results from `eval-init` and `eval-before`)
+-   Go back to initial context and eval final things
+    -   `eval-final` (binds results from `eval-init`, `eval-before` and `eval-after` )
+
+
 <a id="examples"></a>
 
 # Examples
@@ -112,7 +133,7 @@ Below are some example user commands which documentation that hopefully explains
 ;; catch things to journal
 (defvar org-catch-default-journal "~/org/journal.org")
 
-(defun org-catch-journal (&optional arg)
+(defun org-catch-journal ()
   "Creates a new item in the `org-catch-default-journal' under datetree (see `org-datetree.el').
 
 With interactive ARG first ask for a date for datetree where the new journal entry should be filed. Otherwise file the entry for current date.
@@ -128,7 +149,7 @@ Then
 At the end it will delete the text that was refiled and insert the back reference link.
 
 The new journal entry will also have properties to log some context. See `org-catch-created-properties-tempate'."
-  (interactive "p")
+  (interactive)
   (org-catch
    `(:target org-catch-default-journal
      :datetree ((1 . (or region-time t))
@@ -136,15 +157,14 @@ The new journal entry will also have properties to log some context. See `org-ca
      :tags (or at-header-tags (read-multi nil ":" "note" "idea" "meeting"))
      :item (or (and (not region) at-header) read)
      :body (or region at-header-body paragraph read)
-     :edit (or delete-region
-               delete-at-header-subtree
-               delete-paragraph)
-     :backref (make-link :item)
-     ,@org-catch-created-properties-tempate)
-   arg))
+     :final (or delete-region
+                delete-at-header-subtree
+                delete-paragraph)
+     :insert-ref '(:text _item)
+     ,@org-catch-created-properties-tempate)))
 
 ;; catch todos
-(defun org-catch-todo (arg)
+(defun org-catch-todo ()
   "Catch a new TODO entry with. When called with interactive ARG prefix consider `org-agenda-files' for filing targets. Otherwise seek targets in current buffer.
 
 First asks user for filing target. Consider as targets only entries that does not have a todo keyword or has 'PROJ' as todo keyword to avoid nested TODOs.
@@ -158,7 +178,7 @@ Then asks for title for the new TODO entry unless:
 - otherwise just ask user for a TODO title
 
 At the end delete used text and insert back reference at point."
-  (interactive "p")
+  (interactive)
   (org-catch
    `(:target ((1 . (read-ol 'buffer (todo-p nil "PROJ")))
               (4 . (read-ol nil (todo-p nil "PROJ"))))
@@ -166,13 +186,12 @@ At the end delete used text and insert back reference at point."
      :item (or region header-at list-item read)
      :body (or header-at-body list-body)
      :todo "TODO"
-     :edit (or delete-region
-               delete-at-header-subtree
-               (and list-body delete-list)
-               delete-list-item)
-     :backref (make-link :item)
-     ,@org-catch-created-properties-tempate)
-   arg))
+     :final (or delete-region
+                delete-at-header-subtree
+                (and list-body delete-list)
+                delete-list-item)
+     :insert-ref '(:text _item)
+     ,@org-catch-created-properties-tempate)))
 
 ;; org util
 (require 'cl-macs) ; provides cl-letf*
@@ -190,15 +209,14 @@ At the end delete used text and insert back reference at point."
       (funcall todo-fun 'done))))
 
 ;; set todo as done
-(defun org-catch-done (arg)
+(defun org-catch-done ()
   "Ask for a target which is any todo entries in current `org-agenda-files' and set this entry as done. With interactive prefix ARG also ask when it was done.
 
 At the end insert the back reference wrapped as +[[org-id][item]]+, i.e., wrapped in strike-through org markup."
-  (interactive "p")
+  (interactive)
   (org-catch
    `(:target (read-ol nil todo-p)
-     :funcall ((1 . 'org-todo-done)
-               (4 . '(org-todo-done arg)))
-     :backref (make-link :item nil "+"))
-   arg))
+     :before ((1 . 'org-todo-done)
+              (4 . '(org-todo-done arg)))
+     :insert-ref '(:text _item :wrap "+"))))
 ```

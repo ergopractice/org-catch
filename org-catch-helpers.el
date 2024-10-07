@@ -1,3 +1,4 @@
+;; -------->>  [[file:org-catch.src.org::*helpers][helpers:1]]
 (require 'org-catch)
 
 ;;;; -------
@@ -210,18 +211,16 @@
 ;;; functions that return deletion functions (for :edit keyword)
 
 (defun org-catch--helper-delete-region ()
-  "If region is active retun function that deletes it."
-  (when (use-region-p)
-    (lambda ()
-      (org-with-wide-buffer
-       (when-let (((use-region-p))
-                  (p1 (region-beginning))
-                  (p2 (region-end)))
-         (delete-region p1 p2)
-         (goto-char p1))))))
+  "If region is active delete it."
+  (org-with-wide-buffer
+   (when-let (((use-region-p))
+              (p1 (region-beginning))
+              (p2 (region-end)))
+     (delete-region p1 p2)
+     (goto-char p1))))
 
 (defun org-catch--helper-delete-paragraph ()
-  "If at paragraph (i.e. text surrounded by two new lines or by org headers) then return function that deletes this paragraph"
+  "If at paragraph (i.e. text surrounded by two new lines or by org headers) delete this paragraph."
   (unless (or
            ;; do not work on heading-or-item
            (and (derived-mode-p 'org-mode)
@@ -229,43 +228,39 @@
            ;; check if we are on the text line
            (and (looking-at-p "[ \t]*\n")
                 (looking-back "\n[ \t]*")))
-    `(lambda ()
-       (org-with-wide-buffer
-        (org-catch---with-paragraph
-         (delete-region p1 p2)
-         (goto-char p1))))))
+    (org-with-wide-buffer
+     (org-catch---with-paragraph
+      (delete-region p1 p2)
+      (goto-char p1)))))
 
 ;; (funcall (org-catch--helper-delete-paragraph))
 
 (defun org-catch--helper-delete-list-item ()
   (when (and (org-at-item-p) (org-in-item-p))
-    '(lambda ()
-       (org-catch---with-list-item
-        (org-with-wide-buffer
-         (delete-region p1 p2)
-         (goto-char p1))))))
+    (org-catch---with-list-item
+     (org-with-wide-buffer
+      (delete-region p1 p2)
+      (goto-char p1)))))
 
 
 (defun org-catch--helper-delete-list ()
   (when (and (org-at-item-p) (org-in-item-p))
-    '(lambda ()
-       (org-catch---with-list
-        (org-with-wide-buffer
-         (delete-region p1 p2)
-         (goto-char p1))))))
+    (org-catch---with-list
+     (org-with-wide-buffer
+      (delete-region p1 p2)
+      (goto-char p1)))))
 
 (defun org-catch--helper-delete-at-header-subtree ()
-  '(lambda ()
-     (when-let (((org-at-heading-p 'invisible-not-ok))
-                (p1 (save-excursion
-                      (org-back-to-heading)
-                      (point)))
-                (p2 (org-with-wide-buffer
-                     (org-end-of-subtree 'invisible-ok)
-                     (point))))
-       (org-with-wide-buffer
-        (delete-region p1 p2)
-        (goto-char p1)))))
+  (when-let (((org-at-heading-p 'invisible-not-ok))
+             (p1 (save-excursion
+                   (org-back-to-heading)
+                   (point)))
+             (p2 (org-with-wide-buffer
+                  (org-end-of-subtree 'invisible-ok)
+                  (point))))
+    (org-with-wide-buffer
+     (delete-region p1 p2)
+     (goto-char p1))))
 
 
 ;;; helpers for reading from the user input
@@ -748,6 +743,9 @@ The returned function accepts 3 arguments FILE, ID and ITEM - and is called by `
   ;;;; provide
   ;;;; -------
 
-  (provide 'org-catch-helpers)
+(provide 'org-catch-helpers)
 
-  ;; org-catch-helpers.el ends here
+;; org-catch-helpers.el ends here
+;; --------<<  helpers:1 ends here
+
+
