@@ -158,9 +158,9 @@ The new journal entry will also have properties to log some context. See `org-ca
      :item (or (and (not region) at-header) read)
      :body (or region at-header-body paragraph read)
      :final '(or delete-region
-                delete-at-header-subtree
-                delete-paragraph)
-     :insert-ref '(:text _item)
+                 delete-at-header-subtree
+                 delete-paragraph)
+     :insert-ref t
      ,@org-catch-created-properties-tempate)))
 
 ;; catch todos
@@ -181,7 +181,7 @@ At the end delete used text and insert back reference at point."
   (interactive)
   (org-catch
    `(:target ((1 . (read-ol :targets 'buffer :filter (todo-p nil "PROJ")))
-              (4 . (read-ol :targets nil :filter (todo-p nil "PROJ"))))
+              (4 . (read-ol :filter (todo-p nil "PROJ"))))
      :tags (or header-at-tags (read-multi nil ":" "@home" "@office" "@city"))
      :item (or region header-at list-item read)
      :body (or header-at-body list-body)
@@ -190,7 +190,7 @@ At the end delete used text and insert back reference at point."
                  delete-at-header-subtree
                  (and list-body delete-list)
                  delete-list-item)
-     :insert-ref '(:text _item)
+     :insert-ref t
      ,@org-catch-created-properties-tempate)))
 
 ;; org util
@@ -218,5 +218,5 @@ At the end insert the back reference wrapped as +[[org-id][item]]+, i.e., wrappe
    `(:target (read-ol :filter todo-p)
      :before ((1 . '(org-todo-done))
               (4 . '(org-todo-done arg)))
-     :insert-ref '(:text _item :wrap "+"))))
+     :insert-ref '(:wrap "+"))))
 ```
