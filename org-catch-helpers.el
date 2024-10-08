@@ -108,6 +108,26 @@
      ,@body))
 
 
+(defmacro org-catch---with-prev-item (&rest body)
+  "Eval BODY with P1 and P2 vars (markers) bind for previous list item boundaries."
+  `(save-excursion
+     (when-let (((org-at-item-p))
+                ((let (org-list-use-circular-motion)
+                   (ignore-errors (org-previous-item))))
+                (item-begin (org-in-item-p))
+                (p1 (save-excursion
+                      (let ((m (make-marker)))
+                        (goto-char item-begin)
+                        (re-search-forward org-list-full-item-re)
+                        (set-marker m (point)))))
+                (p2 (save-excursion
+                      (let ((m (make-marker)))
+                        (end-of-line)
+                        (set-marker m (point)))))
+                ((/= p1 p2)))
+       ,@body)))
+
+
 ;;; helpers for getting stuff at point
 
 (defun org-catch--helper-region (&optional no-time)
@@ -158,6 +178,15 @@
      str)))
 
 
+(defun org-catch--helper-prev-item (&optional no-time)
+  "If in org list gets previous list item as string. With NO-TIME arg remove time prefix if present (e.g., 5:30 or 4:20-6:00)."
+  (org-catch---with-prev-item
+   (if-let ((str (buffer-substring-no-properties p1 p2))
+            no-time)
+       (replace-regexp-in-string
+        org-catch--helper--time-prefix-re "" str)
+     str)))
+
 (defun org-catch--helper-list-body ()
   "If in org list gets list item as string. With NO-TIME arg remove time prefix if present (e.g., 5:30 or 4:20-6:00)."
   (org-catch---with-list-body
@@ -182,6 +211,90 @@
         ((pred numberp)
          (concat "+" (number-to-string plus-days-or-date) " ")))
       (match-string 1 str)))))
+
+;; references
+(defun org-catch--helper-ref ()
+  "Return reference to current point as :file, :item, :id  plist"
+  `(:file ,(buffer-file-name)
+    :item ,(when (derived-mode-p 'org-mode)
+             (unless (org-before-first-heading-p)
+               (org-get-heading t t t t)))
+    :id ,(when (derived-mode-p 'org-mode)
+           (unless (org-before-first-heading-p)
+             (org-id-get-create)))))
+
+(defun org-catch--helper-match-time (str)
+  "Retur substring that matches time of the day or time interval."
+  (when (and (stringp str)
+             (string-match org-catch--helper--time-prefix-re str))
+    (match-string 1 str)))
+
+(defun org-catch--helper-link (&rest spec)
+  "Return org link formated according to key value arguments (SPEC).  If :file and :id SPEC is not provided use current context as reference."
+  (let ((spec
+         (if (or (plist-get spec :file)
+                 (plist-get spec :id))
+             spec
+           (append spec (org-catch--helper-ref)))))
+    (concat
+     ;; prefix
+     (when-let ((prefix (plist-get spec :prefix)))
+       (concat prefix " "))
+     ;; org link (wrapped)
+     (plist-get spec :wrap) "[["
+     (or (when-let ((id (plist-get spec :id)))
+           (concat
+            (when-let ((type (plist-get spec :type)))
+              (concat type "-"))
+            "id:" id))
+         (when-let ((file (plist-get spec :file)))
+           (concat "file:" file)))
+     "]"
+     ;; link text
+     (when-let (text (or (plist-get spec :text)
+                         (plist-get spec :item)))
+       (concat "[" text "]"))
+     "]" (plist-get spec :wrap)
+     ;; suffix
+     (when-let ((suffix (plist-get spec :suffix)))
+       (concat " " suffix)))))
+
+
+;; (org-catch--helper-link :type "prev")
+
+(defun org-catch--helper-log (fmt &rest spec)
+  "Format string FMT with the rest of :KEYWORD VALUE arguments as format specifications. Note that only first letter of :KEYWORD is taken for specification.
+Some preset specifications are:
+  %l - link to current org entry or file
+  %t - current timestamp in org format."
+  (let* ((time (format-time-string "%Y-%m-%d %a %H:%M" (current-time)))
+         (link (or (apply 'org-catch--helper-link (org-catch--helper-ref)) ""))
+         (spec (map-apply (lambda (key val)
+                            (cons
+                             (string-to-char
+                              (string-replace ":" "" (symbol-name key)))
+                             val))
+                          spec)))
+    (format-spec fmt (append spec `((?t . ,time) (?l . ,link))))))
+
+;; (org-catch--helper-log "%l on [%t] by %i" :iam "user")
+
+
+(defun org-catch--helper-logbook (fmt &rest spec)
+  "Insert log (see `org-catch--helper-log') to current logbook."
+  (save-excursion
+    (goto-char (org-log-beginning 'create))
+    (insert (apply 'org-catch--helper-log fmt spec) "\n")))
+
+
+(defun org-catch--helper-find-id (str)
+  "Look up org id in the STR and get marker if it is found."
+  (when-let (((string-match org-link-bracket-re str))
+             (id (match-string 1 str))
+             ((string-match "id:\\(.*\\)\\'" id)))
+    (org-id-find (match-string 1 id) 'markerp)))
+
+;; tags
 
 (defun org-catch--helper-tags ()
   (when (derived-mode-p 'org-mode)
@@ -439,10 +552,10 @@ CHOICES are string arguments for choices."
 
 ;;; helpers for reading target (ol - outline)
 
-(defun org-catch--helper-read-ol (&optional files filter input)
-  "Reads org outline path and returns a marker. The FILES FILTER and INPUT arguments accept following:
-
-FILES argument can be either or a list of the folloing:
+(defun org-catch--helper-read-ol (&rest specs)
+  "Reads org outline path and returns a marker. The agruments are keyword value with the following :KEYWORDs and VALUES:
+:PROMT string to use as a promt
+:TARGETS keyword value can be either or a list of the folloing:
     nil                   - defaults to `org-refile-targets'
     buffer                - current buffer
     agenda                - current agenda files
@@ -454,8 +567,7 @@ FILES argument can be either or a list of the folloing:
     read-agenda-set-file       - choose the agenda files set and a file for targets
     (agenda-set SET)      - use agenda files SET for targets
     (agenda-set-file SET) - use agenda files SET and choose a file for targets
-
-FILTERS argument (basically any predicate function but here are some helpers sortcuts `org-catch--helper-'):
+:FILTER keyword value (basically any predicate function but here are some helpers sortcuts `org-catch--helper-'):
     subtree-p             - tests if point is within current subtree
     (subtodo-p TODOS)     - tests if point is withing colosest parent subtree with TODOS keyword
     (subtag-p TAGS)       - tests if point is withing colosest parent subtree with TAGS
@@ -467,22 +579,23 @@ FILTERS argument (basically any predicate function but here are some helpers sor
     (no-tag-p &op INHERIT TAGS)
     (every-pred-p)        - function for combining predicate functions as with `and'
     (some-pred-p)         - function for combining predicate functions as with `or'
-
-INPUT argument:
+:INPUT keyword value:
   STRING                  - default input string
   region                  - use current region as default input"
-  (let* ((prompt (or org-catch---key-prompt
+  (let* ((prompt (or (plist-get specs :prompt)
+                     org-catch---key-prompt
                      "org-catch--helper-read-ol: "))
+         (targets (plist-get specs :targets))
          (org-refile-targets
-          (if files
-              (if (or (when (or (symbolp files)
-                                (list-of-strings-p files))
+          (if targets
+              (if (or (when (or (symbolp targets)
+                                (list-of-strings-p targets))
                         ;; convert to list for mapcar
-                        (setq files (list files)))
-                      (when (stringp files)
+                        (setq targets (list targets)))
+                      (when (stringp targets)
                         ;; confert to double list
-                        (setq files (list (list files))))
-                      (proper-list-p files))
+                        (setq targets (list (list targets))))
+                      (proper-list-p targets))
                   (mapcar (lambda (f)
                             (pcase f
                               ;; current buffer
@@ -496,19 +609,21 @@ INPUT argument:
                               ;; list of strings assumed to be a list of files
                               ((pred list-of-strings-p) `(,f . (:maxlevel . 10)))
                               ;; everything else is assumed to be a cons element of`org-refile-targets' direct specs
-                              (`(,_files . (,_key . ,_val)) f)
-                              (_ (error "Bad FILES arg specification"))))
-                          files)
+                              (`(,_targets . (,_key . ,_val)) f)
+                              (_ (error "Bad :TARGETS value specification"))))
+                          targets)
                 (error "Bad FILES arg specification"))
             ;; if files nil use current defauls
             org-refile-targets))
          ;; elements filtering
+         (filter (plist-get specs :filter))
          (org-refile-target-verify-function filter)
          ;; advice fucntion for injecting devault input in refile dialog
          ;; args of `completing-read'
          ;; prompt collection &optional predicate require-match initial-input hist def inherit-input-method
          ;; 0      1                    2         3             4
          ;;                                                     ^ it is 4th argument
+         (input (plist-get specs :input))
          (completing-read-inject-default-input
           `(lambda (args) (setf (nth 4 args) ,input) args)))
     (save-mark-and-excursion
@@ -532,13 +647,10 @@ INPUT argument:
         ;; return marker
         m))))
 
-;; (org-catch--helper-read-ol 'buffer (org-catch--helper-subtree-p))
-
-;; (org-catch--helper-read-ol (org-catch--helper-read-agenda-set) (org-catch--helper-todo-p))
-
-;; (org-catch--helper-read-ol (org-catch--helper-agenda-set "orgzly") (org-catch--helper-todo-p) (org-catch--helper-region))
-
-;; (org-catch--helper-read-ol (org-catch--helper-agenda-set "orgzly") (org-catch--helper-todo-p) (org-catch--helper-region))
+;; (org-catch--helper-read-ol :targets 'buffer :filter (org-catch--helper-subtree-p))
+;; (org-catch--helper-read-ol :targets (org-catch--helper-read-agenda-set)     :filter (org-catch--helper-todo-p))
+;; (org-catch--helper-read-ol :targets (org-catch--helper-agenda-set "orgzly") :filter (org-catch--helper-todo-p) (org-catch--helper-region))
+;; (org-catch--helper-read-ol :targets (org-catch--helper-agenda-set "orgzly") :filter (org-catch--helper-todo-p) (org-catch--helper-region))
 
 
 

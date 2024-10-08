@@ -278,7 +278,7 @@ Returns preprocessed form."
               :eval (when _val
                       (save-excursion
                         (goto-char (org-log-beginning 'create))
-                        (insert _val))))
+                        (insert _val "\n"))))
     ;; org-plan.el
     :plan   (:method set-properties
              :doc "Evaluate before embarding to target. Bind variables things."
@@ -502,7 +502,7 @@ KEYWORDS if not provided defaults to `org-catch-keywords'"
 ;;;; main interface
 ;;;; --------------
 
-(defun org-catch (template &optional arg keywords)
+(defun org-catch (template &optional keywords arg)
   (let* ((arg (or arg current-prefix-arg))
          (data (org-catch--data template arg))
          (target (org-catch--process 'target data nil keywords))
@@ -515,7 +515,6 @@ KEYWORDS if not provided defaults to `org-catch-keywords'"
           (pcase target
             ('nil (point))
             ((pred markerp) target)))
-         (item (org-catch--process 'target-item data nil keywords))
          (datetree (org-catch--process 'target-datetree data nil keywords)))
     (setq org-catch---processed-store nil)
     ;; initial evaluations
@@ -540,7 +539,7 @@ KEYWORDS if not provided defaults to `org-catch-keywords'"
           ;; evaluate before new item
           (org-catch--process 'eval-before data 'multiple-ok keywords)
           ;; create new heading and set target-point to bol
-          (when item
+          (when-let ((item (org-catch--process 'target-item data nil keywords)))
             (if (and target-point
                      (not (org-before-first-heading-p))
                      (not (equal (point) (point-max))))
