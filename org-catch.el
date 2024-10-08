@@ -558,8 +558,7 @@ KEYWORDS if not provided defaults to `org-catch-keywords'"
           (when-let ((body (org-catch--process 'body data nil keywords)))
             (save-excursion
               ;; for inserting props and stuff with body
-              (when item (setq body (concat "\n" (string-trim body) "\n\n")))
-              (insert body)))
+              (insert (concat "\n" (string-trim body) "\n\n"))))
           ;; write all org keywords and properties if it is an entry
           (when (and target-point
                      (goto-char target-point)
