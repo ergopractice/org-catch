@@ -638,7 +638,7 @@ CHOICES are string arguments for choices."
                  (target-file (nth 1 target))
                  (target-pos (or (nth 3 target)
                                  ;; for the top level entries (i.e., just a file) use the end of file
-                                 (with-current-buffer (find-file-noselect file)
+                                 (with-current-buffer (find-file-noselect target-file)
                                    (org-with-wide-buffer (point-max)))))
                  (m (make-marker)))
         (set-marker m target-pos (find-file-noselect target-file))
