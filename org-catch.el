@@ -126,6 +126,7 @@ Returns preprocessed form."
                            ((or 16 '(16)) 16)
                            ((or 64 '(64)) 64)
                            (_ (error "ARG (universal) argument should be either a number or raw (but no more than 3 times: C-u C-u C-u)")))))
+           (message "The arg in --data is: '%s'" arg)
            (setq val (cdr-safe (assoc arg val))))
          ;; get val
          (setq org-catch---key-prompt
@@ -195,7 +196,8 @@ Returns preprocessed form."
 
 (defun org-catch--preprocess-body (body &optional level)
   "adjust BODY's headings so that min heading level would be LEVEL + 1. If LEVEL is current outline level."
-  (when-let ((body (substring-no-properties body))
+  (when-let ((body)
+             (body (substring-no-properties body))
              (level (or level (org-outline-level) 0)))
     (with-temp-buffer
       (insert body)
@@ -320,7 +322,6 @@ Returns preprocessed form."
                  :types (t plistp)
                  :eval-bind (eval-after)
                  :eval (when _val
-                         (message "Inserting stuff")
                          (insert
                           (concat
                            ;; time

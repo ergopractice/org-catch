@@ -1,4 +1,6 @@
-`org-catch` is a concise and flexible alternative to `org-capture`. It allows to set the [order of user input](#input-order) precisely. For example, `org-catch` can ask user to choose a filing target before asking for a title of new org entry, whereas `org-capture` allows to refile an entry to a specific target only after the entry is fully defined and it requires and extra command to call.
+`org-catch` is an Emacs package for making any kind of notes specifically in `org-mode` (e.g., journal entries, tasks, calendar events, links between notes) but not only. It can be seen as a concise and flexible alternative to `org-capture`.
+
+`org-capture` templating system can specify [order of user input](#input-order) precisely. For example, in comparison to `org-capture`, `org-catch` can ask user to choose a filing target before asking for a title of new org entry, whereas `org-capture` only allows to refile an entry to a specific target only after the entry is fully defined and it requires and extra command to do that.
 
 `org-catch` also provides a handful of [helper functions](#helpers) that can be used as shortcuts within a template. This makes `org-catch` template neat and concise. See [examples](#examples).
 
@@ -33,10 +35,10 @@ As of now the package is under ongoing development, so, please, pull it regularl
 
 # Order of user input
 
-The key feature of `org-catch` is that order in which user inputs required information for new record creation or edit follows the the template precisely. For example:
+The key feature of `org-catch` is that the order in which user inputs the information required for new record follows the order of the template. For example:
 
 ```emacs-lisp
-;; insert new TODO item at point
+;; insert a new TODO entry for some general errands at point
 
 ;; first ask for tags and then for title
 (org-catch
@@ -44,7 +46,7 @@ The key feature of `org-catch` is that order in which user inputs required infor
    :item (read-string "Title: ")
    :todo "TODO"))
 
-;; first title for tags and then for tags
+;; first ask for title and then for tags
 (org-catch
  '(:item (read-string "Title: ")
    :tags (completing-read-multiple "Tags: " '("@home" "@office" "@city"))
@@ -56,7 +58,9 @@ The key feature of `org-catch` is that order in which user inputs required infor
 
 # Helpers
 
-`org-catch` also provides handful of helper functions that provide convenience of user interaction and content creation. Helpers functions match `org-catch--helper-*` prefix (by default set in `org-catch--prefix` variable) and it can be used for defining templates as shortcuts, i.e. without the prefix. Helpers shortcuts can be used even without wrapping it as function calls. For example, the three `org-catch` templates below are equivalent:
+`org-catch` also provides handful of helper functions for user interaction and content creation. By default helpers functions names are prefixed with `org-catch--helper-*` and they can be used with templates as shortcuts, i.e. without the prefix. Helpers shortcuts can be used even without function call wrapping, i.e., without enclosing brackets.
+
+The example below demonstrates shortcuts usage for the following helpers: `org-catch--helper-read-ol` (reads outline path), `org-catch--helper-read-multi` (reads multiple strings), `org-catch--helper-list-item` (if point at org list gets the list item as string), `org-catch--helper-read` (reads the string from user). The three `org-catch` templates are equivalent:
 
 ```emacs-lisp
 ;; helpers are not enabled by default
@@ -88,22 +92,22 @@ The key feature of `org-catch` is that order in which user inputs required infor
 
 # Keywords
 
-All `org-catch` keywords are specified in `org-catch-keywords` variable. User can change any keyword to own liking and extend `org-catch` with extra functionalities. Each keyword is associated with a method which is called in the following workflow:
+All `org-catch` keywords used in templates definitions are specified and documented in `org-catch-keywords` variable. User can change any keyword to own liking and extend `org-catch` with more keywords adding some extra functionalities. Each keyword should be associated with one of `org-catch` methods which are called in the following order:
 
--   Eval things while at initial context
+-   Evaluate at initial context
     -   `eval-init`
--   Get target and go there
+-   Get the filing target's file and marker and move the point there
     -   `target`
     -   `target-datetree`
--   Eval at target before inserting new org entry
+-   Evaluate at target before inserting new org entry
     -   `eval-before` (binds results from `eval-init`)
--   Insert new org entry, body and properties
+-   Insert new org entry, its body and set org properties
     -   `target-item`
     -   `target-body`
     -   `set-properties`
--   Eval at target after making new org entry
+-   Evaluate at target after creating a new org entry
     -   `eval-after` (binds results from `eval-init` and `eval-before`)
--   Go back to initial context and eval final things
+-   Evaluate after returning point back to the initial context
     -   `eval-final` (binds results from `eval-init`, `eval-before` and `eval-after` )
 
 
@@ -111,7 +115,7 @@ All `org-catch` keywords are specified in `org-catch-keywords` variable. User ca
 
 # Examples
 
-Below are some example user commands which documentation that hopefully explains its org-catch templates. These examples are included in the package. Add `(require 'org-catch-examples)` to your `init.el` to try them out. Note that you might also want to set `org-catch-default-journal` variable beforehand.
+Below are some examples of selfdocumented user commands. The examples are included in the package. To try them out add `(require 'org-catch-examples)` to your `init.el`. (Note that you might also want to set `org-catch-default-journal` variable beforehand.)
 
 ```emacs-lisp
 ;; first define some common properties for new entry
