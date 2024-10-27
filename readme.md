@@ -1,6 +1,6 @@
-`org-catch` is an Emacs package for making any kind of notes specifically in `org-mode` (e.g., journal entries, tasks, calendar events, links between notes) but not only. It can be seen as a concise and flexible alternative to `org-capture`.
+`org-catch` is an Emacs package for making any kind of notes specifically in `org-mode` (e.g., journal entries, tasks, calendar events, links between notes) but not only. It can be seen as a concise and more flexible alternative to `org-capture`.
 
-`org-capture` templating system can specify [order of user input](#input-order) precisely. For example, in comparison to `org-capture`, `org-catch` can ask user to choose a filing target before asking for a title of new org entry, whereas `org-capture` only allows to refile an entry to a specific target only after the entry is fully defined and it requires and extra command to do that.
+`org-capture` templating system can specify [order of user input](#input-order) precisely. For example, in comparison to `org-capture`, `org-catch` can ask user to choose a filing target before asking for a title of new org entry, whereas `org-capture` only allows to refile an entry to a specific target only after the entry is fully defined and it requires an extra command to do that.
 
 `org-catch` also provides a handful of [helper functions](#helpers) that can be used as shortcuts within a template. This makes `org-catch` template neat and concise. See [examples](#examples).
 
