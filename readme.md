@@ -99,7 +99,11 @@ The example below demonstrates shortcuts usage for the following helpers: `org-c
 
 # Keywords
 
-All `org-catch` keywords used in templates definitions are specified and documented in `org-catch-keywords` variable. User can change any keyword to own liking and extend `org-catch` with more keywords adding some extra functionalities. It is possible to specify keywords with glob patterns. Each keyword is associated with one or more `org-catch` methods (`eval-init`, `target`, `target-datetree`, `eval-before`, `target-item`, `target-body`, `set-properties`, `eval-after`, `eval-final`). The methods are executed in the following order and it reflexes `org-catch` workflow:
+All `org-catch` keywords used in templates definitions are specified and documented in `org-catch-keywords` variable. User can change any keyword to own liking and extend `org-catch` with more keywords adding some extra functionalities.
+
+It is possible to specify keywords with glob patterns. Like so: `:something-*` that will match both `:something-this` and `:something-that`. By default, `org-catch-keywords` defines `:*` to match any other keywords that was not specified in `org-catch-keywords` and use it as org properties.
+
+Each keyword is associated with one or more `org-catch` methods (`eval-init`, `target`, `target-datetree`, `eval-before`, `target-item`, `target-body`, `set-properties`, `eval-after`, `eval-final`). The methods are executed in the following order and it reflexes `org-catch` workflow:
 
 1.  Evaluate at initial context
     -   `eval-init`
