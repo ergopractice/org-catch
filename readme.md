@@ -1,6 +1,6 @@
 `org-catch` is an Emacs package for creating any kinds of records (e.g., journal entries, tasks, calendar events, links between notes, etc.), specifically in `org-mode` but not only. It can be seen as a concise and more flexible alternative to `org-capture`.
 
-`org-catch` templating system can specify [order of user input](#input-order) precisely. For example, in comparison to `org-capture`, `org-catch` can ask user to choose a filing target before asking for a title of new org entry, whereas `org-capture` only allows to refile an entry to a specific target only after the entry is fully defined and it requires an extra command to do that.
+`org-catch` template is a plist that specifies how to get the data for the record. The [keywords](#keywords) mostly correspond special org properties and are defined and documented in `org-catch-keywords` variable that can be modified and extended. The values are evaluated one by one so the template specifies the [order of user input](#input-order) precisely. For example, in comparison to `org-capture`, `org-catch` can ask user to choose a filing target before asking for a title of new org entry, whereas `org-capture` only allows to refile an entry to a specific target only after the entry is fully defined and it requires an extra command to do that.
 
 `org-catch` also provides a handful of [helper functions](#helpers) that can be used as shortcuts within a template. This makes `org-catch` template neat and concise. See [examples](#examples).
 
@@ -66,6 +66,11 @@ The example below demonstrates shortcuts usage for the following helpers: `org-c
 ;; helpers are not enabled by default
 (require 'org-catch-helpers)
 
+;; The calls do the following:
+;; - read a filing target marker by completing org outline for org-agenda-files
+;; - read tags for new entry
+;; - if point is on org list item use it as a heading otherwise read a string
+
 ;; Helper functions as shortcut variables (the most concise varian)
 (org-catch
  '(:target read-ol
@@ -90,25 +95,27 @@ The example below demonstrates shortcuts usage for the following helpers: `org-c
 ```
 
 
+<a id="keywords"></a>
+
 # Keywords
 
-All `org-catch` keywords used in templates definitions are specified and documented in `org-catch-keywords` variable. User can change any keyword to own liking and extend `org-catch` with more keywords adding some extra functionalities. Each keyword should be associated with one of `org-catch` methods which are called in the following order:
+All `org-catch` keywords used in templates definitions are specified and documented in `org-catch-keywords` variable. User can change any keyword to own liking and extend `org-catch` with more keywords adding some extra functionalities. It is possible to specify keywords with glob patterns. Each keyword is associated with one or more `org-catch` methods (`eval-init`, `target`, `target-datetree`, `eval-before`, `target-item`, `target-body`, `set-properties`, `eval-after`, `eval-final`). The methods are executed in the following order and it reflexes `org-catch` workflow:
 
--   Evaluate at initial context
+1.  Evaluate at initial context
     -   `eval-init`
--   Get the filing target's file and marker and move the point there
+2.  Get the filing target's file and marker and move the point there
     -   `target`
     -   `target-datetree`
--   Evaluate at target before inserting new org entry
+3.  Evaluate at target before inserting new org entry
     -   `eval-before` (binds results from `eval-init`)
--   Insert new org entry, its body and set org properties
+4.  Insert new org entry, its body and set org properties
     -   `target-item`
     -   `target-body`
     -   `set-properties`
--   Evaluate at target after creating a new org entry
+5.  Evaluate at target after creating a new org entry
     -   `eval-after` (binds results from `eval-init` and `eval-before`)
--   Evaluate after returning point back to the initial context
-    -   `eval-final` (binds results from `eval-init`, `eval-before` and `eval-after` )
+6.  Evaluate after returning point back to the initial context
+    -   `eval-final` (binds results from `eval-init`, `eval-before` and `eval-after`)
 
 
 <a id="examples"></a>
