@@ -1,43 +1,41 @@
-`org-catch` is an Emacs package for creating any kinds of records (e.g., journal entries, tasks, calendar events, links between notes, etc.), specifically in `org-mode` but not only. It can be seen as a concise and more flexible alternative to `org-capture`.
+~org-catch~ is an Emacs package for creating any kinds of records (e.g., journal entries, tasks, calendar events, links between notes, etc.), specifically in ~org-mode~ but not only. It can be seen as a concise and more flexible alternative to ~org-capture~.
 
-`org-catch` template is a plist that specifies how to get the data for the record. The [keywords](#keywords) mostly correspond special org properties and are defined and documented in `org-catch-keywords` variable that can be modified and extended. The values are evaluated one by one so the template specifies the [order of user input](#input-order) precisely. For example, in comparison to `org-capture`, `org-catch` can ask user to choose a filing target before asking for a title of new org entry, whereas `org-capture` only allows to refile an entry to a specific target only after the entry is fully defined and it requires an extra command to do that.
+~org-catch~ template is a plist that specifies how to get the data for the record. The [[#keywords][keywords]] mostly correspond special org properties and are defined and documented in ~org-catch-keywords~ variable that can be modified and extended. The values are evaluated one by one so the template specifies the [[#input-order][input order]] precisely. For example, in comparison to ~org-capture~, ~org-catch~ can ask user to choose a filing target before asking for a title of new org entry, whereas `org-capture` only allows to refile an entry to a specific target only after the entry is fully defined and it requires an extra command to do that.
 
-`org-catch` also provides a handful of [helper functions](#helpers) that can be used as shortcuts within a template. This makes `org-catch` template neat and concise. See [examples](#examples).
+~org-catch~ also provides a handful of [[#helpers][helper functions]] that can be used as shortcuts within a template. This makes ~org-catch~ template neat and concise. See [[#examples][examples]].
 
 
-# Installation
+* Installation
 
-The package is not yet on melpa so you can get it with straight.el, for example, by adding the following to your `init.el`:
+The package is not yet on melpa so you can get it with straight.el, for example, by adding the following to your ~init.el~:
 
-```emacs-lisp
+#+begin_src emacs-lisp
 (use-package org-catch
   :straight (:host github :repo "ergopractice/org-catch"))
-```
+#+end_src
 
-Otherwise, download it manually (change the YOUR-ELISP-DIR to the directory path you would like to store `org-catch` on your computer):
+Otherwise, download it manually (change the YOUR-ELISP-DIR to the directory path you would like to store ~org-catch~ on your computer):
 
-```shell
+#+begin_src shell
 cd YOUR-ELISP-DIR
 git clone https://github.com/ergopractice/org-catch.git
-```
+#+end_src
 
-Then add the following to your `init.el`:
+Then add the following to your ~init.el~:
 
-```emacs-lisp
+#+begin_src emacs-lisp
 (load-path YOUR-ELISP-DIR/org-catch)
 (require 'org-catch)
-```
+#+end_src
 
-As of now the package is under ongoing development, so, please, pull it regularly (e.g., whith `straight-pull-package`). Your [comments and suggestions](https://github.com/ergopractice/org-catch/issues) are very welcome and helpful.
+As of now the package is under ongoing development, so, please, pull it regularly (e.g., whith ~straight-pull-package~). Your [[https://github.com/ergopractice/org-catch/issues][comments and suggestions]] are very welcome and helpful.
 
+* Order of user input
+#+html: <a id="input-order"></a>
 
-<a id="input-order"></a>
+The key feature of ~org-catch~ is that the order in which user inputs the information required for new record follows the order of the template. For example:
 
-# Order of user input
-
-The key feature of `org-catch` is that the order in which user inputs the information required for new record follows the order of the template. For example:
-
-```emacs-lisp
+#+begin_src emacs-lisp
 ;; insert a new TODO entry for some general errands at point
 
 ;; first ask for tags and then for title
@@ -51,18 +49,17 @@ The key feature of `org-catch` is that the order in which user inputs the inform
  '(:item (read-string "Title: ")
    :tags (completing-read-multiple "Tags: " '("@home" "@office" "@city"))
    :todo "TODO"))
-```
+#+end_src
 
 
-<a id="helpers"></a>
+* Helpers
+#+html: <a id="helpers"></a>
 
-# Helpers
+~org-catch~ also provides handful of helper functions for user interaction and content creation. By default helpers functions names are prefixed with ~org-catch--helper-*~ and they can be used with templates as shortcuts, i.e. without the prefix. Helpers shortcuts can be used even without function call wrapping, i.e., without enclosing brackets.
 
-`org-catch` also provides handful of helper functions for user interaction and content creation. By default helpers functions names are prefixed with `org-catch--helper-*` and they can be used with templates as shortcuts, i.e. without the prefix. Helpers shortcuts can be used even without function call wrapping, i.e., without enclosing brackets.
+The example below demonstrates shortcuts usage for the following helpers: ~org-catch--helper-read-ol~ (reads outline path), ~org-catch--helper-read-multi~ (reads multiple strings), ~org-catch--helper-list-item~ (if point at org list gets the list item as string), ~org-catch--helper-read~ (reads the string from user). The three ~org-catch~ templates are equivalent:
 
-The example below demonstrates shortcuts usage for the following helpers: `org-catch--helper-read-ol` (reads outline path), `org-catch--helper-read-multi` (reads multiple strings), `org-catch--helper-list-item` (if point at org list gets the list item as string), `org-catch--helper-read` (reads the string from user). The three `org-catch` templates are equivalent:
-
-```emacs-lisp
+#+begin_src emacs-lisp
 ;; helpers are not enabled by default
 (require 'org-catch-helpers)
 
@@ -92,43 +89,42 @@ The example below demonstrates shortcuts usage for the following helpers: `org-c
    :item (or (org-catch--helper-list-item)
              (org-catch--helper-read))
    :todo "TODO"))
-```
+#+end_src
 
 
-<a id="keywords"></a>
+* Keywords
+#+html: <a id="keywords"></a>
 
-# Keywords
+All ~org-catch~ keywords used in templates definitions are specified and documented in ~org-catch-keywords~ variable. User can change any keyword to own liking and extend ~org-catch~ with more keywords adding some extra functionalities.
 
-All `org-catch` keywords used in templates definitions are specified and documented in `org-catch-keywords` variable. User can change any keyword to own liking and extend `org-catch` with more keywords adding some extra functionalities.
+It is possible to specify keywords with glob patterns. Like so: ~:something-*~ that will match both ~:something-this~ and ~:something-that~. By default, ~org-catch-keywords~ defines ~:*~ to match any other keywords that was not specified in ~org-catch-keywords~ and use it as org properties.
 
-It is possible to specify keywords with glob patterns. Like so: `:something-*` that will match both `:something-this` and `:something-that`. By default, `org-catch-keywords` defines `:*` to match any other keywords that was not specified in `org-catch-keywords` and use it as org properties.
+Each keyword is associated with one or more ~org-catch~ methods (~eval-init~, ~target~, ~target-datetree~, ~eval-before~, ~target-item~, ~target-body~, ~set-properties~, ~eval-after~, ~eval-final~). The methods are executed in the following order and it reflexes ~org-catch~ workflow:
 
-Each keyword is associated with one or more `org-catch` methods (`eval-init`, `target`, `target-datetree`, `eval-before`, `target-item`, `target-body`, `set-properties`, `eval-after`, `eval-final`). The methods are executed in the following order and it reflexes `org-catch` workflow:
-
-1.  Evaluate at initial context
-    -   `eval-init`
-2.  Get the filing target's file and marker and move the point there
-    -   `target`
-    -   `target-datetree`
-3.  Evaluate at target before inserting new org entry
-    -   `eval-before` (binds results from `eval-init`)
-4.  Insert new org entry, its body and set org properties
-    -   `target-item`
-    -   `target-body`
-    -   `set-properties`
-5.  Evaluate at target after creating a new org entry
-    -   `eval-after` (binds results from `eval-init` and `eval-before`)
-6.  Evaluate after returning point back to the initial context
-    -   `eval-final` (binds results from `eval-init`, `eval-before` and `eval-after`)
+1. Evaluate at initial context
+   - ~eval-init~
+2. Get the filing target's file and marker and move the point there
+   - ~target~
+   - ~target-datetree~
+3. Evaluate at target before inserting new org entry
+   - ~eval-before~ (binds results from ~eval-init~)
+4. Insert new org entry, its body and set org properties
+   - ~target-item~
+   - ~target-body~
+   - ~set-properties~
+5. Evaluate at target after creating a new org entry
+   - ~eval-after~ (binds results from ~eval-init~ and ~eval-before~)
+6. Evaluate after returning point back to the initial context
+   - ~eval-final~ (binds results from ~eval-init~, ~eval-before~ and ~eval-after~)
 
 
-<a id="examples"></a>
 
-# Examples
+* Examples
+#+html: <a id="examples"></a>
 
-Below are some examples of selfdocumented user commands. The examples are included in the package. To try them out add `(require 'org-catch-examples)` to your `init.el`. (Note that you might also want to set `org-catch-default-journal` variable beforehand.)
+Below are some examples of selfdocumented user commands. The examples are included in the package. To try them out add ~(require 'org-catch-examples)~ to your ~init.el~. (Note that you might also want to set ~org-catch-default-journal~ variable beforehand.)
 
-```emacs-lisp
+#+begin_src emacs-lisp
 ;; first define some common properties for new entry
 (defvar org-catch-created-properties-tempate
   '(:created (org-current-time-as-inactive-timestamp-string)
@@ -234,4 +230,4 @@ At the end insert the back reference wrapped as +[[org-id][item]]+, i.e., wrappe
      :before ((1 . '(org-todo-done))
               (4 . '(org-todo-done arg)))
      :insert-ref '(:wrap "+"))))
-```
+#+end_src
