@@ -28,7 +28,14 @@ Then add the following to your ~init.el~:
 (require 'org-catch)
 #+end_src
 
-As of now the package is under ongoing development, so, please, pull it regularly (e.g., whith ~straight-pull-package~). Your [[https://github.com/ergopractice/org-catch/issues][comments and suggestions]] are very welcome and helpful.
+If you're on a newer version of Emacs, check if you got ~package-vc~ installed (~M-x describe-function RET use-package RET~, and look for the ~:vc~ keyword). If it is installed, you can install this package like this:
+
+#+begin_src emacs-lisp
+(use-package org-catch
+  :vc (:url "https://github.com/ergopractice/org-catch"))
+#+end_src
+
+As of now the package is under ongoing development, so, please, pull it regularly (e.g., whith ~straight-pull-package~ or ~package-vc-upgrade~). Your [[https://github.com/ergopractice/org-catch/issues][comments and suggestions]] are very welcome and helpful.
 
 * Order of user input
 #+html: <a id="input-order"></a>
