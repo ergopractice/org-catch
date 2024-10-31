@@ -126,7 +126,6 @@ Returns preprocessed form."
                            ((or 16 '(16)) 16)
                            ((or 64 '(64)) 64)
                            (_ (error "ARG (universal) argument should be either a number or raw (but no more than 3 times: C-u C-u C-u)")))))
-           (message "The arg in --data is: '%s'" arg)
            (setq val (cdr-safe (assoc arg val))))
          ;; get val
          (setq org-catch---key-prompt
@@ -502,7 +501,7 @@ KEYWORDS if not provided defaults to `org-catch-keywords'"
 ;;;; --------------
 ;;;; main interface
 ;;;; --------------
-
+;;;###autoload
 (defun org-catch (template &optional keywords arg)
   (let* ((arg (or arg current-prefix-arg))
          (data (org-catch--data template arg))
