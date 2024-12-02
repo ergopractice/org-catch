@@ -321,22 +321,24 @@ Returns preprocessed form."
                  :types (t plistp)
                  :eval-bind (eval-after)
                  :eval (when _val
-                         (insert
-                          (concat
-                           ;; time
-                           (when-let ((time (plist-get _val :time))
-                                      ((stringp time))
-                                      ((string-match org-catch--helper--time-prefix-re time)))
-                             (concat
-                              (match-string 1 time) " "))
-                           ;; org link (wrapped)
-                           (plist-get _val :wrap) "[["
-                           (or (and (stringp _id) (concat "id:" _id))
-                               (and (stringp _file) (concat "file:" _file)))
-                           "]"
-                           (when-let (name (or (plist-get _val :text) _item))
-                             (concat "[" name "]"))
-                           "]" (plist-get _val :wrap)))))
+                         (save-excursion
+                           (end-of-line)
+                           (insert
+                            (concat
+                             ;; time
+                             (when-let ((time (plist-get _val :time))
+                                        ((stringp time))
+                                        ((string-match org-catch--helper--time-prefix-re time)))
+                               (concat
+                                (match-string 1 time) " "))
+                             ;; org link (wrapped)
+                             (plist-get _val :wrap) "[["
+                             (or (and (stringp _id) (concat "id:" _id))
+                                 (and (stringp _file) (concat "file:" _file)))
+                             "]"
+                             (when-let (name (or (plist-get _val :text) _item))
+                               (concat "[" name "]"))
+                             "]" (plist-get _val :wrap))))))
     ;; everything else used as org entry properties (glob pattern)
     :*      (:method set-properties
              :doc "Evaluate before embarding to target. Bind variables things."
