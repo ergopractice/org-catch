@@ -1,4 +1,4 @@
-;; -------->>  [[file:org-catch.src.org::*helpers][helpers:1]]
+;; -------->>  [[id:org:jgxihb21vfk0][helpers:1]]
 (require 'org-catch)
 
 ;;;; -------
@@ -195,6 +195,7 @@
               ((not (string-match-p "\\`[[:space:]]*\\'" str))))
      ;; fix list indentation
      (with-temp-buffer
+       (org-mode)
        (insert str)
        (org-indent-region (point-min) (point-max))
        (buffer-string)))))

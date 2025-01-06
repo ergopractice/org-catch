@@ -1,4 +1,4 @@
-;; -------->>  [[file:org-catch.src.org::*require][require:1]]
+;; -------->>  [[id:org:w0dj8b21vfk0][require:1]]
 (require 'org)
 (require 'org-clock)
 (require 'subr-x)                       ; when-let, thread-first
@@ -7,7 +7,7 @@
 
 
 
-;; -------->>  [[file:org-catch.src.org::*engine][engine:1]]
+;; -------->>  [[id:org:oigk8b21vfk0][engine:1]]
 ;;;; ---------------
 ;;;; form processing
 ;;;; ---------------
@@ -199,6 +199,7 @@ Returns preprocessed form."
              (body (substring-no-properties body))
              (level (or level (org-outline-level) 0)))
     (with-temp-buffer
+      (org-mode)
       (insert body)
       (goto-char (point-min))
       (let (body-levels)
@@ -321,24 +322,22 @@ Returns preprocessed form."
                  :types (t plistp)
                  :eval-bind (eval-after)
                  :eval (when _val
-                         (save-excursion
-                           (end-of-line)
-                           (insert
-                            (concat
-                             ;; time
-                             (when-let ((time (plist-get _val :time))
-                                        ((stringp time))
-                                        ((string-match org-catch--helper--time-prefix-re time)))
-                               (concat
-                                (match-string 1 time) " "))
-                             ;; org link (wrapped)
-                             (plist-get _val :wrap) "[["
-                             (or (and (stringp _id) (concat "id:" _id))
-                                 (and (stringp _file) (concat "file:" _file)))
-                             "]"
-                             (when-let (name (or (plist-get _val :text) _item))
-                               (concat "[" name "]"))
-                             "]" (plist-get _val :wrap))))))
+                         (insert
+                          (concat
+                           ;; time
+                           (when-let ((time (plist-get _val :time))
+                                      ((stringp time))
+                                      ((string-match org-catch--helper--time-prefix-re time)))
+                             (concat
+                              (match-string 1 time) " "))
+                           ;; org link (wrapped)
+                           (plist-get _val :wrap) "[["
+                           (or (and (stringp _id) (concat "id:" _id))
+                               (and (stringp _file) (concat "file:" _file)))
+                           "]"
+                           (when-let (name (or (plist-get _val :text) _item))
+                             (concat "[" name "]"))
+                           "]" (plist-get _val :wrap)))))
     ;; everything else used as org entry properties (glob pattern)
     :*      (:method set-properties
              :doc "Evaluate before embarding to target. Bind variables things."
