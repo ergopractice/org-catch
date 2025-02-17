@@ -264,7 +264,7 @@ Returns preprocessed form."
            :doc "Evaluate before embarding to target. Bind variables things."
            :eval _val)
     :before (:method eval-before
-             :doc "Evaluate after inserting item to target."
+             :doc "Evaluate before inserting item to target."
              :eval-bind (eval-init))
     :after (:method eval-after
             :doc "Evaluate after inserting item to target."
@@ -338,6 +338,8 @@ Returns preprocessed form."
                            (when-let (name (or (plist-get _val :text) _item))
                              (concat "[" name "]"))
                            "]" (plist-get _val :wrap)))))
+    :_* (:method eval-init
+         :doc "Any kind of value to use as placement in next keywords, e.g. (:_text read :item (concat \"Some \" __text)). Does nothing than that")
     ;; everything else used as org entry properties (glob pattern)
     :*      (:method set-properties
              :doc "Evaluate before embarding to target. Bind variables things."

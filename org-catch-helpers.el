@@ -155,6 +155,22 @@
     (substring-no-properties
      (org-get-heading 'no-tags 'no-todo 'no-priority 'no-comment))))
 
+(defun org-catch--helper-parent-link ()
+  (when (derived-mode-p 'org-mode)
+    (when (org-up-heading-or-point-min)
+      (if (org-before-first-heading-p)
+          (let ((file (buffer-file-name)))
+            (concat "[[file:" file "][" (file-name-base file) "]]"))
+        (org-with-wide-buffer
+         (concat
+          "[[id:" (org-id-get-create) "]["
+          (replace-regexp-in-string
+           ;; remove progress meters as it breaks the link
+           "\\([[:space:]]*\\[[0-9/%]+\\][[:space:]]*\\)\\|\\(|\\)" ""
+           (org-entry-get (point) "ITEM"))
+          "]]"))))))
+
+
 (defun org-catch--helper-at-header ()
   (when (and (derived-mode-p 'org-mode)
              (org-at-heading-p))
@@ -306,6 +322,12 @@ Some preset specifications are:
              (org-at-heading-p))
     (org-get-tags nil 'local)))
 
+(defun org-catch--helper-at-header-todo ()
+  (when-let (((and (derived-mode-p 'org-mode)
+                   (org-at-heading-p)))
+             (todo (org-get-todo-state)))
+    (substring-no-properties todo)))
+
 (defun org-catch--helper-at-header-body ()
   (when (and (derived-mode-p 'org-mode)
              (org-at-heading-p))
@@ -314,8 +336,7 @@ Some preset specifications are:
                  ;; (org-end-of-meta-data t)
                  ;; just grab everything right after the heading
                  (org-back-to-heading)
-                 (end-of-line)
-                 (point)))
+                 (pos-bol 2)))
            (p2 (org-with-wide-buffer
                 (org-end-of-subtree 'invisible-ok)
                 (point))))
@@ -808,22 +829,22 @@ CHOICES are string arguments for choices."
 FILES and FILTER1 are for the first olpath reading (same as in `org-catch--helper-read-ol')
 FILTER2 and INPUT are for the second olpath reading (its `org-catch--helper-read-ol' FILES arg is 'buffer). FILTER2 function should be buffer independent (e.g., '(org-catch--helper-todo-p \"TASK\"))' and not '(org-catch--helper-subtree-p)' as the returned function will be created for the current buffer's subtree)."
   (let ((m (let (org-refile-use-outline-path)
-             (org-catch--helper-read-ol files filter1)))
+             (org-catch--helper-read-ol :targets files :filter filter1)))
         (filter2 (or filter2 (lambda () t))))
     (with-current-buffer (marker-buffer m)
       (org-with-wide-buffer
        (goto-char m)
        (org-catch--helper-read-ol
-        'buffer
-        (org-catch--helper-every-pred-p
-         (org-catch--helper-subtree-p)
-         filter2)
-        input)))))
+        :targets 'buffer
+        :filter (org-catch--helper-every-pred-p
+                 (org-catch--helper-subtree-p)
+                 filter2)
+        :input input)))))
 
-;; (org-catch--helper-read-ol-insteps (org-catch--helper-tag-p nil "practice"))
+;; (org-catch--helper-read-ol-insteps (org-catch--helper-tag-p "practice"))
 
-;; (org-catch--helper-read-ol-insteps (org-catch--helper-tag-p nil "practice")
-;;                                        (org-catch--helper-todo-p "TASK"))
+;; (org-catch--helper-read-ol-insteps (org-catch--helper-tag-p "practice")
+;;                                    (org-catch--helper-todo-p "TASK"))
 
 
 
