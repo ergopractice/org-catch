@@ -235,7 +235,12 @@
   `(:file ,(buffer-file-name)
     :item ,(when (derived-mode-p 'org-mode)
              (unless (org-before-first-heading-p)
-               (org-get-heading t t t t)))
+               (replace-regexp-in-string
+                ;; remove progress meters as it breaks the link
+                "\\([[:space:]]*\\[[0-9/%]+\\][[:space:]]*\\)\\|\\(|\\)" ""
+                (substring-no-properties
+                 ;; (org-get-heading 'no-tags 'no-todo 'no-priority 'no-comment)
+                 (org-entry-get nil "ITEM")))))
     :id ,(when (derived-mode-p 'org-mode)
            (unless (org-before-first-heading-p)
              (org-id-get-create)))))
@@ -247,7 +252,7 @@
     (match-string 1 str)))
 
 (defun org-catch--helper-link (&rest spec)
-  "Return org link formated according to key value arguments (SPEC).  If :file and :id SPEC is not provided use current context as reference."
+  "Return org link formated according to key value arguments (SPEC).  If :file and :id SPEC are not provided use current context as reference."
   (let ((spec
          (if (or (plist-get spec :file)
                  (plist-get spec :id))

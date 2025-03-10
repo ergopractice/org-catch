@@ -270,11 +270,11 @@ Returns preprocessed form."
             :doc "Evaluate after inserting item to target."
             :eval-bind (eval-init eval-before))
     :final (:method eval-final
-            :doc "Evaluate after inserting item to target."
+            :doc "Evaluate when the point is back to initial context."
             :eval-bind (eval-init eval-before eval-after))
     ;; special inserts
     :logbook (:method set-properties
-              :doc "Evaluate before embarding to target. Bind variables things."
+              :doc "Insert input string to logbook drawer (make one if needed)"
               :types (nil stringp)
               ;; alternatives :ins :inc :let :inj :eval :form :fun
               :eval (when _val
@@ -324,6 +324,8 @@ Returns preprocessed form."
                  :eval (when _val
                          (insert
                           (concat
+                           ;; prefix
+                           (plist-get _val :prefix)
                            ;; time
                            (when-let ((time (plist-get _val :time))
                                       ((stringp time))
@@ -335,9 +337,10 @@ Returns preprocessed form."
                            (or (and (stringp _id) (concat "id:" _id))
                                (and (stringp _file) (concat "file:" _file)))
                            "]"
-                           (when-let (name (or (plist-get _val :text) _item))
+                           (when-let ((name (or (plist-get _val :text) _item)))
                              (concat "[" name "]"))
-                           "]" (plist-get _val :wrap)))))
+                           "]" (plist-get _val :wrap)
+                           (plist-get _val :suffix)))))
     :_* (:method eval-init
          :doc "Any kind of value to use as placement in next keywords, e.g. (:_text read :item (concat \"Some \" __text)). Does nothing than that")
     ;; everything else used as org entry properties (glob pattern)
